@@ -1,0 +1,18 @@
+node{
+    def mavenHome = tool name: "Maven386"
+    stage('Git-Code'){
+        git branch: 'development', changelog: false, credentialsId: '4c73dbcc-7520-4b9a-a93d-c3d37eb7a96e', poll: false, url: 'https://github.com/polavsai/maven-web-application.git'
+    }
+    stage('Maven-Build'){
+        sh "${mavenHome}/bin/mvn clean package"
+    }
+    stage("Sonar-Report"){
+        sh "${mavenHome}/bin/mvn sonar:sonar"
+    }
+    stage("Nexus-Repository"){
+        sh "${mavenHome}/bin/mvn deploy"
+    }
+    stage("Tomcat Upload"){
+        deploy adapters: [tomcat9(credentialsId: 'tomcat', path: '', url: 'http://ec2-18-134-206-75.eu-west-2.compute.amazonaws.com:8080/')], contextPath: 'PipeLineSCM', onFailure: false, war: 'target/maven-web-application.war'
+    }
+}
